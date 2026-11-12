@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
+import { FolderUpload } from "./FolderUpload";
 
 type Doc = {
   id: string;
@@ -26,7 +27,6 @@ export function AdminClient() {
   const [title, setTitle] = useState("");
   const [source, setSource] = useState("");
   const [content, setContent] = useState("");
-  const [file, setFile] = useState<File | null>(null);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -67,31 +67,6 @@ export function AdminClient() {
     await refresh();
   }
 
-  async function uploadFile(e: FormEvent) {
-    e.preventDefault();
-    if (!file) return;
-    setLoading(true);
-    setError("");
-    setMessage("");
-    const form = new FormData();
-    form.append("file", file);
-    if (title) form.append("title", title);
-    if (source) form.append("source", source);
-    const res = await fetch("/api/admin/documents", {
-      method: "POST",
-      body: form,
-    });
-    const data = await res.json();
-    setLoading(false);
-    if (!res.ok) {
-      setError(data.error || "上传失败");
-      return;
-    }
-    setFile(null);
-    setMessage(`已上传：${data.document.title}`);
-    await refresh();
-  }
-
   async function createInvite() {
     const res = await fetch("/api/admin/invites", {
       method: "POST",
@@ -114,14 +89,29 @@ export function AdminClient() {
           className="mb-2 text-xl font-semibold"
           style={{ fontFamily: "var(--font-sora), sans-serif" }}
         >
-          导入知识
+          批量导入本地知识库
         </h2>
         <p className="mb-4 text-sm text-[var(--muted)]">
-          支持粘贴 Markdown/纯文本，或上传 .md/.txt 文件。也可把从 IMA
-          导出的材料放到 knowledge-import/ 后运行导入脚本。
+          把本地保存的 Simul8 知识库文件夹拖进来，或点选文件夹。导入后即可在「问答」里检索使用。
+          PDF/PPT/Word 请先转成 Markdown/TXT 再上传（当前按文本入库）。
         </p>
 
-        <form onSubmit={uploadText} className="mb-6 grid gap-3">
+        <FolderUpload
+          disabled={loading}
+          onDone={refresh}
+          onMessage={setMessage}
+          onError={setError}
+        />
+
+        {error ? <p className="error mt-3">{error}</p> : null}
+        {message ? (
+          <p className="mt-3 text-sm text-[var(--accent)]">{message}</p>
+        ) : null}
+      </section>
+
+      <section className="card p-5">
+        <h3 className="mb-3 text-lg font-semibold">单条粘贴导入（可选）</h3>
+        <form onSubmit={uploadText} className="grid gap-3">
           <div className="grid gap-3 md:grid-cols-2">
             <div className="field mb-0">
               <label className="label">标题</label>
@@ -145,36 +135,16 @@ export function AdminClient() {
           <div className="field mb-0">
             <label className="label">正文</label>
             <textarea
-              className="textarea min-h-[180px]"
+              className="textarea min-h-[140px]"
               value={content}
               onChange={(e) => setContent(e.target.value)}
               required
             />
           </div>
-          <button className="btn btn-primary w-fit" disabled={loading}>
+          <button className="btn btn-secondary w-fit" disabled={loading}>
             写入知识库
           </button>
         </form>
-
-        <form onSubmit={uploadFile} className="flex flex-wrap items-end gap-3">
-          <div className="field mb-0">
-            <label className="label">上传文件</label>
-            <input
-              className="input"
-              type="file"
-              accept=".md,.txt,.markdown,.csv"
-              onChange={(e) => setFile(e.target.files?.[0] || null)}
-            />
-          </div>
-          <button className="btn btn-secondary" disabled={loading || !file}>
-            上传并切片
-          </button>
-        </form>
-
-        {error ? <p className="error mt-3">{error}</p> : null}
-        {message ? (
-          <p className="mt-3 text-sm text-[var(--accent)]">{message}</p>
-        ) : null}
       </section>
 
       <section className="card p-5">
@@ -209,7 +179,9 @@ export function AdminClient() {
       </section>
 
       <section className="card p-5">
-        <h3 className="mb-3 text-lg font-semibold">已入库文档</h3>
+        <h3 className="mb-3 text-lg font-semibold">
+          已入库文档（{docs.length}）
+        </h3>
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm">
             <thead>
@@ -229,7 +201,9 @@ export function AdminClient() {
                     {d.errorMsg ? ` (${d.errorMsg})` : ""}
                   </td>
                   <td>{d._count.chunks}</td>
-                  <td className="max-w-[240px] truncate">{d.source}</td>
+                  <td className="max-w-[280px] truncate" title={d.source || ""}>
+                    {d.source}
+                  </td>
                 </tr>
               ))}
             </tbody>
