@@ -1,0 +1,35 @@
+services:
+  db:
+    image: pgvector/pgvector:pg16
+    container_name: simul8-pg
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: simul8
+      POSTGRES_PASSWORD: simul8
+      POSTGRES_DB: simul8
+    ports:
+      - "5432:5432"
+    volumes:
+      - simul8_pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U simul8 -d simul8"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  web:
+    build: .
+    container_name: simul8-web
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql://simul8:simul8@db:5432/simul8?schema=public
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  simul8_pg_data:

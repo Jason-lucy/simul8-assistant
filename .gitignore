@@ -31,7 +31,10 @@ yarn-error.log*
 .pnpm-debug.log*
 
 # env files (can opt-in for committing if needed)
-.env*
+.env
+.env.local
+.env.*.local
+!.env.example
 
 # vercel
 .vercel
@@ -39,3 +42,14 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# local tooling / agent folders
+.agents/
+.claude/
+.cursor/
+.devin/
+
+# IMA local scan/import runtime (large / personal)
+knowledge-import/ima-import.log
+knowledge-import/ima-scan.json
+knowledge-import/ima-export/

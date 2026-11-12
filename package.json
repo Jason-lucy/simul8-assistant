@@ -4,24 +4,51 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
-    "build": "next build --turbopack",
+    "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "db:push": "prisma db push",
+    "db:generate": "prisma generate",
+    "db:seed-admin": "node scripts/seed-admin.mjs",
+    "db:seed-knowledge": "tsx scripts/seed-knowledge.ts",
+    "import:folder": "tsx scripts/import-from-folder.ts",
+    "import:ima": "tsx scripts/import-from-ima.ts",
+    "start:lan": "next dev --turbopack -H 0.0.0.0 -p 3000",
+    "postinstall": "prisma generate"
   },
   "dependencies": {
+    "@prisma/client": "^6.19.0",
+    "bcryptjs": "^3.0.3",
+    "jose": "^6.2.17",
+    "mammoth": "^1.13.0",
+    "next": "15.5.29",
+    "openai": "^7.55.0",
+    "pdf-parse": "^1.1.1",
     "react": "19.1.0",
     "react-dom": "19.1.0",
-    "next": "15.5.29"
+    "uuid": "^14.0.3",
+    "zod": "^4.6.7"
   },
   "devDependencies": {
-    "typescript": "^5",
+    "@eslint/eslintrc": "^3",
+    "@tailwindcss/postcss": "^4",
+    "@types/bcryptjs": "^2.4.6",
     "@types/node": "^20",
+    "@types/pdf-parse": "^1.1.5",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "@tailwindcss/postcss": "^4",
-    "tailwindcss": "^4",
+    "@types/uuid": "^10.0.0",
     "eslint": "^9",
     "eslint-config-next": "15.5.29",
-    "@eslint/eslintrc": "^3"
+    "prisma": "^6.19.0",
+    "tailwindcss": "^4",
+    "tsx": "^4.23.15",
+    "typescript": "^5"
+  },
+  "allowScripts": {
+    "@prisma/engines@6.19.0": true,
+    "@prisma/client@6.19.0": true,
+    "prisma@6.19.0": true,
+    "esbuild@0.28.2": true
   }
 }

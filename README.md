@@ -1,36 +1,97 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Simul8 知识问答助手
 
-## Getting Started
+公司可自托管的浏览器问答系统：
 
-First, run the development server:
+- 知识存在应用自己的 PostgreSQL（pgvector），**不直连个人 IMA**
+- 每位同事独立账号，**自行配置 LLM API Key**（费用各自承担）
+- 适合放到 GitHub，别人克隆后自己部署
+
+## 别人怎么用（推荐：GitHub 自托管）
+
+### 1. 克隆仓库
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+git clone <你的仓库地址>
+cd "Simul8 QA Assistant"
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 2. 配置环境变量
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+cp .env.example .env
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+请修改：
 
-## Learn More
+- `ENCRYPTION_SECRET` / `AUTH_SECRET`（长随机串）
+- `ADMIN_EMAIL` / `ADMIN_PASSWORD`
+- `BOOTSTRAP_INVITE_CODE`（发给同事的邀请码）
+- 可选：`EMBEDDING_*`（公司共用的 Embedding；没有则靠关键词检索）
 
-To learn more about Next.js, take a look at the following resources:
+### 3. 一键启动（Docker）
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+docker compose up -d --build
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+浏览器打开：http://localhost:3000
 
-## Deploy on Vercel
+- 管理员：`.env` 里的账号密码
+- 同事：用邀请码注册 → 在「API 设置」填自己的模型 Base URL / Key / 模型名 → 开始问答
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### 4. 仅本地开发（可选）
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```bash
+docker compose up -d db
+npm install
+npx prisma db push
+npm run db:seed-admin
+npm run db:seed-knowledge
+npm run start:lan
+```
+
+## 功能
+
+- 邀请码注册 / 登录
+- 个人 OpenAI 兼容 API（DeepSeek / 通义兼容 / OpenAI 等）
+- 知识库 RAG 问答（含引用）
+- 会话历史按用户隔离
+- 管理后台上传资料、生成邀请码
+
+## 知识从哪里来
+
+仓库已包含：
+
+- `knowledge-import/seed/` 入门说明 + IMA 目录标题索引（便于检索定位）
+- 管理后台可继续上传 Markdown/TXT
+
+若你本机仍有 IMA 凭证，可继续把原文导入（不会把 IMA Key 写进仓库）：
+
+```bash
+npm run import:ima
+```
+
+导入结果在本地数据库；若要把正文也分发给同事，请把导出的 `.md/.txt` 放进 `knowledge-import/` 后提交（注意版权，勿提交未授权整本 PDF）。
+
+## 费用归属
+
+| 项目 | 谁付费 |
+|------|--------|
+| Chat 补全 | 每位用户自己的 API Key |
+| Embedding | 部署方 `.env` 中的 `EMBEDDING_API_KEY`（可选） |
+| 服务器 | 各自部署环境 |
+
+## 安全注意
+
+- **不要**把 `.env`、IMA Client ID / API Key 提交到 GitHub
+- 每人使用独立账号与独立 API Key
+- 生产环境务必更换默认管理员密码与加密密钥
+
+## 目录
+
+- `src/app` 页面与 API
+- `src/lib` 鉴权、加密、切片、RAG
+- `prisma` 数据模型
+- `knowledge-import` 种子知识
+- `scripts` 初始化与导入
+- `docker-compose.yml` / `Dockerfile` 部署
